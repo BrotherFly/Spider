@@ -1,0 +1,92 @@
+s=['']
+print(s[0])
+print(len(s[0]))
+import re
+import urllib.request
+import pymysql
+
+conn = pymysql.connect(host='127.0.0.1',port=3306,user='root',passwd='1234',db='class_wx', charset="utf8")
+cursor = conn.cursor()
+def getHtml(url):
+
+    page = urllib.request.urlopen(url)
+    html = page.read().decode("utf-8")
+
+    return html
+
+def getInfo(html,userid):
+    #reg = r   name: 'HTML+CSS基础课程',
+    cousenamestring = re.compile("name: '(.*?)',", re.S)
+    cousename = re.findall(cousenamestring,html)
+    #print(cousename[0])
+    info = re.compile('<span class="time">(.*?)study-points',re.S)
+    infolist = re.findall(info,html)
+    for i in infolist:
+        print(i)
+        print("'0000")
+
+        yearstr = re.compile('<b>(.*?)</b>',re.S)
+        monthstr = re.compile('<em>(.*?)月',re.S)
+        daystr = re.compile('月(.*?)日',re.S)
+        year = re.findall(yearstr,i)[0]
+        month = re.findall(monthstr,i)[0]
+        day = re.findall(daystr,i)[0]
+        datestring = year+'-'+month+'-'+day
+      #  <a href="/learn/96" target="_blank">Android攻城狮的第一门课（入门篇）</a>
+
+        courseidstr = re.compile('<a href="/learn/(.*?)" target="_blank">', re.S)
+        courseid = re.findall(courseidstr,i)
+        print(len(courseid[0]))
+        if(len(courseid[0])==0):
+            print("wrong")
+        else:
+            coursestr = re.compile(' <img width="200" height="113" alt="(.*?)" src="', re.S)
+            coursename = re.findall(coursestr,i)[0]
+
+            sql = "INSERT INTO class_2_copy(userid,time,courseid,course) VALUES ('%s','%s','%s','%s')" %(userid,datestring,courseid[0],coursename)
+            print(sql)
+            cursor.execute(sql)
+            conn.commit()
+
+
+    #return infolist
+
+if __name__ == '__mhttp://www.dxstudio.com/guide_content.aspx?id=70a2b2cf-193e-4019-859c-28210b1da81f' \
+               'ain__':
+    sqll = "SELECT userid from class_1"
+    cursor.execute(sqll)
+    result = cursor.fetchall()
+
+    sqll2 = "SELECT userid from class_2"
+    cursor.execute(sqll2)
+    result2 = cursor.fetchall()
+    quchong = []
+    quchong2 = []
+    """
+    for res in result:
+        if res not in quchong:
+            quchong.append(res)
+    for ress in quchong:
+        if ress not in result2:
+            quchong2.append(ress)
+            """
+    print(len(quchong))
+    print(len(quchong2))
+    for userid in quchong2:
+        user = userid[0]
+        url = "http://www.imooc.com/u/"+str(user)+"/courses"
+        print(url)
+
+        try:
+            html = getHtml(url)
+            getInfo(html,user)
+
+            #print(infolist)
+
+            #print(html)
+        except urllib.error.HTTPError:
+            print(userid)
+        except pymysql.err.ProgrammingError:
+            print(userid)
+
+
